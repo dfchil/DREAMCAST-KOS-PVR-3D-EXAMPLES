@@ -38,6 +38,13 @@ $(TEXDIR_RGB565_VQ_TW):
 $(TEXDIR_RGB565_VQ_TW)/%.dt: assets/texture/rgb565_vq_tw/%.png $(TEXDIR_RGB565_VQ_TW)
 	pvrtex -f RGB565 -c -i $< -o $@
 
+TEXDIR_RGBA4444_VQ_TW=romdisk/texture/rgba4444_vq_tw
+$(TEXDIR_RGBA4444_VQ_TW):
+	mkdir -p $@
+$(TEXDIR_RGBA4444_VQ_TW)/%.dt: assets/texture/rgba4444_vq_tw/%.png $(TEXDIR_RGBA4444_VQ_TW)
+	pvrtex -f ARGB4444 -c -i $< -o $@
+
+
 romdisk.img: $(DTTEXTURES)
 	$(KOS_GENROMFS) -f romdisk.img -d romdisk -v
 

@@ -16,7 +16,7 @@
 #include <arch/gdb.h>
 #endif
 
-#define SUPERSAMPLING 1 // Set to 1 to enable horizontal FSAA, 0 to disable
+#define SUPERSAMPLING 0 // Set to 1 to enable horizontal FSAA, 0 to disable
 #if SUPERSAMPLING == 1
 #define XSCALE 2.0f
 #else
@@ -49,6 +49,7 @@ static float fovy = DEFAULT_FOV;
 static dttex_info_t texture256;
 static dttex_info_t texture64;
 static dttex_info_t texture32;
+static dttex_info_t textureVqARGB;
 
 static inline void set_cube_transform() {
   mat_load(&stored_projection_view);
@@ -84,10 +85,10 @@ static inline void draw_textured_sprite(vec3f_t *tverts, uint32_t side,
   quad2ndhalf->dy = dc->y;
   quad2ndhalf->auv =
       PVR_PACK_16BIT_UV(cube_tex_coords[0][0], cube_tex_coords[0][1]);
-  quad2ndhalf->cuv =
-      PVR_PACK_16BIT_UV(cube_tex_coords[3][0], cube_tex_coords[3][1]);
   quad2ndhalf->buv =
       PVR_PACK_16BIT_UV(cube_tex_coords[2][0], cube_tex_coords[2][1]);
+  quad2ndhalf->cuv =
+      PVR_PACK_16BIT_UV(cube_tex_coords[3][0], cube_tex_coords[3][1]);
   pvr_dr_commit(quad);
 }
 
@@ -98,10 +99,13 @@ void render_txr_tr_cube(void) {
                 sizeof(vec3f_t));
   pvr_dr_state_t dr_state;
   pvr_sprite_cxt_t cxt;
-  pvr_sprite_cxt_txr(&cxt, PVR_LIST_TR_POLY, texture256.pvrformat,
-                     texture256.width, texture256.height, texture256.ptr,
+  pvr_sprite_cxt_txr(&cxt, PVR_LIST_TR_POLY, textureVqARGB.pvrformat,
+                     textureVqARGB.width, textureVqARGB.height, textureVqARGB.ptr,
                      PVR_FILTER_BILINEAR);
-  cxt.gen.specular = PVR_SPECULAR_ENABLE;
+  cxt.txr.alpha = PVR_TXRALPHA_ENABLE;
+  // cxt.txr.env = PVR_TXRENV_MODULATEALPHA;
+
+  // cxt.gen.specular = PVR_SPECULAR_ENABLE;
   cxt.gen.culling = PVR_CULLING_NONE;
   pvr_dr_init(&dr_state);
   pvr_sprite_hdr_t hdr;
@@ -451,6 +455,9 @@ int main(int argc, char *argv[]) {
   pvr_set_bg_color(0, 0, 0);
   if (!pvrtex_load("/rd/texture/rgb565_vq_tw/dc.dt", &texture256))
     return -1;
+  if (!pvrtex_load("/rd/texture/rgba4444_vq_tw/snowflake.dt", &textureVqARGB))
+    return -1;
+
   if (!pvrtex_load("/rd/texture/pal8/dc_64sq_256colors.dt", &texture64))
     return -1;
   if (!pvrtex_load_palette("/rd/texture/pal8/dc_64sq_256colors.dt.pal",
@@ -499,6 +506,7 @@ int main(int argc, char *argv[]) {
   }
   printf("Cleaning up\n");
   pvrtex_unload(&texture256);
+  pvrtex_unload(&textureVqARGB);
   pvrtex_unload(&texture64);
   pvrtex_unload(&texture32);
   pvr_shutdown(); // Clean up PVR resources

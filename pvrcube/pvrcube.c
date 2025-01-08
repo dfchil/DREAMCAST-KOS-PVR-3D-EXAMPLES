@@ -4,26 +4,25 @@
 /********************************************************************************************/
 /********************************************************************************************/
 /* Name:     pngzoom .c */
-/* Title:    
-/* Author:   
+/* Title:
+/* Author:
 /* Created:   05/08/24 */
 /*                                                                                          */
 /* Version:  1.0 */
 /********************************************************************************************/
 
 #include <dc/fmath.h> /* Fast math library headers for optimized mathematical functions */
+#include <dc/matrix.h> /* Matrix library headers for handling matrix operations */
+#include <dc/matrix3d.h> /* Matrix3D library headers for handling 3D matrix operations */
 #include <dc/pvr.h> /* PVR library headers for PowerVR graphics chip functions */
 #include <kos.h> /* Includes necessary KallistiOS (KOS) headers for Dreamcast development */
 #include <png/png.h> /* PNG library headers for handling PNG images */
 #include <stdio.h> /* Standard I/O library headers for input and output functions */
 #include <stdlib.h> /* Standard library headers for general-purpose functions, including abs() */
 
-#include <dc/matrix.h> /* Matrix library headers for handling matrix operations */
-#include <dc/matrix3d.h> /* Matrix3D library headers for handling 3D matrix operations */
-
-#include "../cube.h" /* Cube vertices and side strips layout */
-#include "../pvrtex.h" /* texture management, single header code */
+#include "../cube.h"        /* Cube vertices and side strips layout */
 #include "../perspective.h" /* Perspective projection matrix functions */
+#include "../pvrtex.h"      /* texture management, single header code */
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 
@@ -57,7 +56,8 @@ void render_cube(void) {
   mat_rotate_y(cube_state.rot.y);
 
   vec3f_t tverts[8] __attribute__((aligned(32))) = {0};
-  mat_transform((vector_t*)&cube_vertices, (vector_t*)&tverts, 8, sizeof(vec3f_t));
+  mat_transform((vector_t *)&cube_vertices, (vector_t *)&tverts, 8,
+                sizeof(vec3f_t));
 
   pvr_poly_cxt_t cxt;
   pvr_dr_state_t dr_state;
@@ -98,19 +98,20 @@ static inline void cube_reset_state() {
   update_projection_view(fovy);
 }
 
-
 int update_state() {
   int keep_running = 1;
   MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, state)
-  if (state->buttons & CONT_START){
+  if (state->buttons & CONT_START) {
     keep_running = 0;
   }
 
   if (abs(state->joyx) > 16)
-    cube_state.pos.x += (state->joyx / 32768.0f) * 20.5f; // Increased sensitivity
+    cube_state.pos.x +=
+        (state->joyx / 32768.0f) * 20.5f; // Increased sensitivity
   if (abs(state->joyy) > 16)
-    cube_state.pos.y += (state->joyy / 32768.0f) * 20.5f; // Increased sensitivity and inverted Y
-  if (state->ltrig > 16) // Left trigger to zoom out
+    cube_state.pos.y += (state->joyy / 32768.0f) *
+                        20.5f; // Increased sensitivity and inverted Y
+  if (state->ltrig > 16)       // Left trigger to zoom out
     cube_state.pos.z -= (state->ltrig / 255.0f) * ZOOM_SPEED;
   if (state->rtrig > 16) // Right trigger to zoom in
     cube_state.pos.z += (state->rtrig / 255.0f) * ZOOM_SPEED;
@@ -171,9 +172,9 @@ int main(int argc, char *argv[]) {
       {PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0,
        PVR_BINSIZE_0},
       512 * 1024, // Vertex buffer size
-      0, // No DMA
-      0, //  No FSAA
-      0  // Translucent Autosort enabled.
+      0,          // No DMA
+      0,          //  No FSAA
+      0           // Translucent Autosort enabled.
   };
 
   pvr_init(&params);
@@ -202,8 +203,9 @@ int main(int argc, char *argv[]) {
   printf("Cleaning up\n");
   pvrtex_unload(&texture);
   pvr_shutdown(); // Clean up PVR resources
-  vid_shutdown(); // This function reinitializes the video system to what dcload
-                  // and friends expect it to be Run the main application here;
+  vid_shutdown(); // This function reinitializes the video system to what
+                  // dcload and friends expect it to be Run the main
+                  // application here;
 
   printf("Exiting main\n");
   return 0;
